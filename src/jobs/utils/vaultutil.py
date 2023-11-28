@@ -1,16 +1,19 @@
 import requests
 
-VAULT_URL = "http://127.0.0.1:8200"
-ROLE_ID = "0a7b569a-7a75-31f1-4aff-aabed2f66b34"
-SECRET_ID = "9c50eeb0-868a-d943-5c07-3a8086485d93"
-SECRET_PATH = "secret/data/snow"
+class VaultClient:
+    def __init__(self, vault_url, role_id, secret_id, secret_path):
+        self.vault_url = vault_url
+        self.role_id = role_id
+        self.secret_id = secret_id
+        self.secret_path = secret_path
 
-def authenticate_with_approle():
-        auth_url = f"{VAULT_URL}/v1/auth/approle/login"
+    def authenticate_with_approle(self):
+        auth_url = f"{self.vault_url}/v1/auth/approle/login"
         auth_data = {
-            "role_id": ROLE_ID,
-            "secret_id": SECRET_ID
+            "role_id": self.role_id,
+            "secret_id": self.secret_id
         }
+
         try:
             auth_response = requests.post(auth_url, json=auth_data)
             auth_response.raise_for_status()
@@ -23,12 +26,12 @@ def authenticate_with_approle():
             print(f"Authentication error: {e}")
             return None
 
-def get_secret( token):
+    def get_secret(self, token):
         headers = {
             "X-Vault-Token": token,
         }
 
-        url = f"{VAULT_URL}/v1/{SECRET_PATH}"
+        url = f"{self.vault_url}/v1/{self.secret_path}"
 
         try:
             response = requests.get(url, headers=headers)
@@ -41,6 +44,22 @@ def get_secret( token):
             print(f"Error retrieving secret: {e}")
             return None
 
-token = authenticate_with_approle()
-secret_data = get_secret(token)
-print(secret_data)
+if __name__ == "__main__":
+    VAULT_URL = "http://127.0.0.1:8200"
+    ROLE_ID = "b4519f47-0fdc-9dc9-3dbc-0114ca5a2f59"
+    SECRET_ID = "73058162-a32a-6372-a9cc-74d8c4b7913a"
+    SECRET_PATH = "secret/data/snow"
+
+    vault_client = VaultClient(VAULT_URL, ROLE_ID, SECRET_ID, SECRET_PATH)
+
+    token = vault_client.authenticate_with_approle()
+
+    if token:
+        secret_data = vault_client.get_secret(token)
+
+        if secret_data:
+            print("Secret data:", secret_data)
+        else:
+            print("Failed to retrieve secret.")
+    else:
+        print("Failed to authenticate with AppRole.")
