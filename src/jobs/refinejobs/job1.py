@@ -1,3 +1,5 @@
 import boto3
-print("test")
-import sys
+from utils.vaultutil import authenticate_with_approle
+
+test=authenticate_with_approle
+print(test)
